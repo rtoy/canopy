@@ -153,14 +153,14 @@
 
     // Draw additional info above 150 pixel-width.
     if (end - start > 50) {
-      this.ctx.fillText(this.getTimeFromSample(sampleLength),
+      this.ctx.fillText(this.getFormattedTimeFromSample(sampleLength),
         start + (end - start) * 0.5, STYLE.miniMapHeight * 0.8);
-      this.ctx.fillText(this.getTimeFromSample(this.sampleStart),
+      this.ctx.fillText(this.getFormattedTimeFromSample(this.sampleStart),
         start, STYLE.miniMapHeight * 1.2);
-      this.ctx.fillText(this.getTimeFromSample(this.sampleEnd),
+      this.ctx.fillText(this.getFormattedTimeFromSample(this.sampleEnd),
         end, STYLE.miniMapHeight * 1.2);
     } else {
-      this.ctx.fillText(this.getTimeFromSample(sampleLength),
+      this.ctx.fillText(this.getFormattedTimeFromSample(sampleLength),
         start + (end - start) * 0.5, STYLE.miniMapHeight * 1.2);
     }
 
@@ -243,8 +243,8 @@
     }
 
     this.onChange('viewport-change', {
-      start: this.sampleStart,
-      end: this.sampleEnd
+      start: this.getSecondFromSample(this.sampleStart),
+      end: this.getSecondFromSample(this.sampleEnd)
     });
 
     this.needsRedraw = true;
@@ -257,16 +257,23 @@
     this.needsRedraw = true;
   };
 
+  MiniMap.prototype.setRange = function (start, end) {
+    this.sampleStart = start * this.renderedBuffer.sampleRate;
+    this.sampleEnd = end * this.renderedBuffer.sampleRate;
+    this.needsRedraw = true;
+  };
+
   MiniMap.prototype.onChange = function (eventType, data) {
     this.controller.notify('minimap', eventType, data);
   };
 
   // TO FIX: resizing should change the regionStart/End properly.
   MiniMap.prototype.onResize = function () {
-    this.canvas.width = this.width = window.innerWidth - 520;
-    this.canvas.height = STYLE.height;
-    this.canvasOS.width = this.width;
-    this.canvasOS.height = STYLE.height;
+    var calculatedWidth = Canopy.STYLE.editorWidth + Canopy.STYLE.viewPadding;
+    this.width = window.innerWidth - calculatedWidth;
+    this.canvas.width = this.canvasOS.width = this.width;
+    this.canvas.height = this.canvasOS.height = STYLE.height;
+    
 
     // Fake that buffer is dirty.
     this.isBufferDirty = true;
@@ -322,15 +329,21 @@
 
   };
 
-  MiniMap.prototype.getTimeFromSample = function (samples) {
+  MiniMap.prototype.getSecondFromSample = function (samples) {
     if (!this.renderedBuffer)
-      return null;
+      return 0;
+    
+    return samples / this.renderedBuffer.sampleRate;
+  };
 
-    var seconds = samples / this.renderedBuffer.sampleRate;
+  MiniMap.prototype.getFormattedTimeFromSample = function (samples) {
+    var seconds = this.getSecondFromSample(samples);
     var sec = Math.floor(seconds);
     var msec = Math.floor((seconds - sec) * 1000);
     return sec + '.' + msec;
   };
+
+
 
   // MiniMap factory.
   Canopy.createMiniMap = function (canvasId) {
