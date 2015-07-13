@@ -1,6 +1,6 @@
 {
   "name": "canopy",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "https://github.com/hoch/canopy",
   "authors": [
     "Hongchan Choi"
@@ -14,6 +14,14 @@
     "tests"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#~0.5.4"
+    "polymer": "Polymer/polymer#^1.0.0",
+    "spiral-gistloader": "hoch/spiral-gistloader#~0.0.2",
+    "spiral-waveform": "hoch/spiral-waveform#~0.0.2",
+    "spiral-minimap": "hoch/spiral-minimap#~0.0.2",
+    "spiral-coder": "hoch/spiral-coder#~0.0.2",
+    "paper-drawer-panel": "PolymerElements/paper-drawer-panel#^1.0.0",
+    "paper-header-panel": "PolymerElements/paper-header-panel#^1.0.0",
+    "paper-spinner": "PolymerElements/paper-spinner#^1.0.0",
+    "paper-toolbar": "PolymerElements/paper-toolbar#^1.0.0"
   }
 }
