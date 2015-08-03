@@ -77,9 +77,9 @@ Example:
         value: 'IDLE'
       },
 
-      shown: {
+      hidden: {
         type: Boolean,
-        value: true
+        value: false
       }
 
     },
@@ -124,7 +124,7 @@ Example:
     /** Render-related **/
 
     _updateView: function () {
-      if (!this._audioBuffer)
+      if (!this._audioBuffer || this.hidden)
         return;
 
       this._render();
@@ -167,34 +167,34 @@ Example:
       if (!this._audioBuffer)
         return;
 
-      uiMode:
-      { CREATE_REGION, MOVE_HANDLE_L, MOVE_HANDLE_R, MOVE_REGION, IDLE }
+      // uiMode:
+      // { CREATE_REGION, MOVE_HANDLE_L, MOVE_HANDLE_R, MOVE_REGION, IDLE }
 
-      var pos = event.detail;
+      // var pos = event.detail;
 
-      // Pure x, y coordinates should be contained inside the target element
-      // without padding or margin.
-      pos.x = event.detail.sourceEvent.offsetX;
-      pos.y = event.detail.sourceEvent.offsetY;
+      // // Pure x, y coordinates should be contained inside the target element
+      // // without padding or margin.
+      // pos.x = event.detail.sourceEvent.offsetX;
+      // pos.y = event.detail.sourceEvent.offsetY;
 
-      // Calculate current region area by pixels.
-      var needsUpdate = false;
-      var region = this._spectrogramDrawer.getRegion();
+      // // Calculate current region area by pixels.
+      // var needsUpdate = false;
+      // var region = this._spectrogramDrawer.getRegion();
 
-      switch(pos.state) {
+      // switch(pos.state) {
 
-        case 'start':
-          break;
+      //   case 'start':
+      //     break;
 
-        case 'track':
-          break;
+      //   case 'track':
+      //     break;
 
-        case 'end':
-          break;
-      }
+      //   case 'end':
+      //     break;
+      // }
 
-      if (needsUpdate)
-        this._updateRegion(handleL, handleR);
+      // if (needsUpdate)
+      //   this._updateRegion(handleL, handleR);
     },
 
 
@@ -220,23 +220,20 @@ Example:
       }, 1);
     },
 
-
-    // Public APIs.
-
     /**
      * Hide the editor.
      */
     hide: function () {
-      this.shown = false;
       this.style.display = 'none';
+      this.hidden = true;
     },
 
     /**
      * Show the editor.
      */
     show: function () {
-      this.shown = true;
       this.style.display = 'flex';
+      this.hidden = false;
     },
 
     /**
