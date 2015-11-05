@@ -75,11 +75,6 @@ Example:
       _uiMode: {
         type: String,
         value: 'IDLE'
-      },
-
-      hidden: {
-        type: Boolean,
-        value: false
       }
 
     },
@@ -124,7 +119,7 @@ Example:
     /** Render-related **/
 
     _updateView: function () {
-      if (!this._audioBuffer || this.hidden)
+      if (!this._audioBuffer)
         return;
 
       this._render();
@@ -220,21 +215,6 @@ Example:
       }, 1);
     },
 
-    /**
-     * Hide the editor.
-     */
-    hide: function () {
-      this.style.display = 'none';
-      this.hidden = true;
-    },
-
-    /**
-     * Show the editor.
-     */
-    show: function () {
-      this.style.display = 'flex';
-      this.hidden = false;
-    },
 
     /**
      * Sets the controller object for reporting the local state change.

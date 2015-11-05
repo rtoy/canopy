@@ -1,0 +1,394 @@
+<!--
+  <canopy-app>
+
+  @description Canopy application element. (app-shell)
+  @version 0.1.0-alpha
+  @author Hongchan Choi (hongchan.choi@gmail.com)
+-->
+
+<!-- iron/paper elements -->
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../bower_components/paper-styles/paper-styles.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+
+<!-- canopy specific element -->
+<link rel="import" href="canopy-toolbar.html">
+
+<!-- spiral elements -->
+<link rel="import" href="../bower_components/spiral-coder/spiral-coder.html">
+<link rel="import" href="../bower_components/spiral-gistloader/spiral-gistloader.html">
+<link rel="import" href="../bower_components/spiral-minimap/spiral-minimap.html">
+<link rel="import" href="../bower_components/spiral-waveform/spiral-waveform.html">
+
+<!-- canopy specific class -->
+<script src="canopyaudio.js"></script>
+
+<!-- element definition -->
+<dom-module id="canopy-app">
+
+  <style is="custom-style">
+    :host {
+      -webkit-user-select: none;
+      display: block;
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+    }
+
+    .drawer {
+      @apply(--layout-vertical);
+      z-index: 9999;
+    }
+
+    .drawer .app-title {
+      font-family: 'Roboto Condensed';
+      font-size: 2.2em;
+      font-weight: 100;
+      color: #00695C;
+      background-color: #B2DFDB;
+      padding: 0.5em;
+      margin-bottom: 0.5em;
+
+    }
+
+    .drawer .app-title .version {
+      font-size: 0.5em;
+    }
+
+    .drawer .about {
+      @apply(--layout-horizontal);
+      border-top: 1px solid #E8EAF6;
+      height: 64px;
+    }
+
+    .drawer .about > paper-item {
+      font-size: 0.85em;
+    }
+
+    .drawer .about > paper-item > a {
+      color: #455A64;
+      text-decoration: none;
+    }
+
+    .workspace {
+      @apply(--layout-vertical);
+      z-index: 0;
+    }
+
+    #ePaneWaveform {
+      @apply(--layout-flex);
+      min-height: 256px;
+      overflow: hidden;
+    }
+
+    #eSplitter {
+      height: 16px;
+      min-height: 16px;
+      background-color: #484847;
+      box-shadow:
+        inset 0px 7px 5px -7px hsla(0, 100%, 100%, 0.45),
+        inset 0px -12px 1px -11px rgba(0,0,0,0.5);
+      cursor: row-resize;
+    }
+
+    .splitter-handle {
+      margin: 5px auto;
+      height: 3px;
+      width: 100px;
+      border-top: 1px solid #888888;
+      border-bottom: 1px solid #888888;
+    }
+
+    #ePaneEditor {
+      @apply(--layout-horizontal);
+      min-height: 256px;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    #eMiniMap {
+      height: 64px;
+    }
+
+    #eTools {
+      @apply(--layout-vertical);
+      color: #B7DAD7;
+      background-color: #506067;
+      padding-right: 4px;
+    }
+
+    .modal-container {
+      border-radius: 0.4em;
+      padding: 1em;
+      max-width: 50%;
+    }
+
+    .modal-title {
+      padding: 0 1em;
+      font-size: 1.4em;
+      font-weight: 700;
+    }
+
+    .version {
+      text-align: center;
+      font-size: 1em;
+      font-weight: 100;
+      width: 100%;
+    }
+  </style>
+
+  <template>
+
+    <!-- wrapper -->
+    <paper-drawer-panel id="eAppShell" force-narrow="true" drawer-width="256px"
+      disable-swipe="true" disable-edge-swipe="true">
+
+      <!-- drawer -->
+      <div drawer class="drawer vertical layout">
+        <div class="app-title">Canopy</div>
+        <div class="flex">
+          <paper-item on-click="_onBtnOpenAbout">About</paper-item>
+        </div>
+        <div class="about">
+          <paper-item>
+            <a href="https://github.com/hoch/canopy" target="_blank">
+              <iron-icon icon="home" item-icon></iron-icon>
+              <span>GitHub</span>
+            </a>
+          </paper-item>
+          <paper-item>
+            <a href="https://github.com/hoch/canopy/issues" target="_blank">
+              <iron-icon icon="report-problem" item-icon></iron-icon>
+              <span>Issue Tracker</span>
+            </a>
+          </paper-item>
+        </div>
+      </div>
+
+      <!-- workspace -->
+      <div main class="workspace">
+
+        <div id="ePaneWaveform" class="vertical layout">
+
+          <canopy-toolbar>
+            <paper-icon-button icon="menu" on-click="_onBtnMenu"></paper-icon-button>
+            <span class="title">Canopy</span>
+            <paper-icon-button icon="av:stop" on-click="_onAudioStop"></paper-icon-button>
+            <paper-icon-button icon="av:play-arrow" on-click="_onAudioPlay"></paper-icon-button>
+            <paper-icon-button id="eBtnLoop" icon="av:repeat" on-click="_onAudioToggleLoop"></paper-icon-button>
+            <span class="flex"></span>
+          </canopy-toolbar>
+
+          <div>
+            <spiral-minimap id="eMiniMap"></spiral-minimap>
+          </div>
+
+          <div class="flex">
+            <spiral-waveform id="eWaveform"></spiral-waveform>
+          </div>
+        </div>
+
+        <div id="eSplitter" on-track="_handleSplitterDrag">
+          <div class="splitter-handle"></div>
+        </div>
+
+        <div id="ePaneEditor">
+          <div id="eTools">
+            <paper-icon-button icon="send" on-click="_onBtnRender"></paper-icon-button>
+            <paper-icon-button icon="description" on-click="_onBtnOpenGistLoader"></paper-icon-button>
+          </div>
+          <spiral-coder id="eCoder"></spiral-coder>
+        </div>
+
+      </div>
+
+    </paper-drawer-panel>
+
+    <!-- Modal: About -->
+    <paper-dialog id="eAboutModal" class="modal-container" modal>
+      <div class="modal-title">About</div>
+      <div class="modal-body">
+        <p><a href="https://github.com/hoch/canopy" target="_blank">Canopy</a> 
+          is a debugging suite for Web Audio API programming featuring:</p>
+        <ul>
+          <li>Interactive Waveform inspector with seamless zoom in/out.</li>
+          <li>Web Audio API code editor with:
+            <ul>
+              <li>Web Audio API autocompletion</li>
+              <li>Gist integration</li>
+              <li>Embedded context configuration</li>
+            </ul>
+          </li>
+          <li>On demand playback with looping.</li>
+        </ul>
+        <p><a href="https://github.com/hoch/canopy" target="_blank">Canopy</a>
+          is created by <a href="http://hoch.io" target="_blank">Hongchan Choi</a>
+          for Chromium Web Audio API project.<br>For feedback, question or contribution,
+          please use <a href="https://github.com/hoch/canopy/issues" target="_blank">
+          GitHub issue tracker</a>.</p>
+        <div class="version">0.1.0-alpha</div>
+      </div>
+      <div class="buttons">
+        <paper-button dialog-confirm autofocus raised>CLOSE</paper-button>
+      </div>
+    </paper-dialog>
+
+    <!-- Modal: GistLoader -->
+    <paper-dialog id="eLoaderModal" class="modal-container" modal>
+      <div class="modal-title">Loading Gist</div>
+      <spiral-gistloader id="eGistLoader" class="flex"></spiral-gistloader>
+      <div class="buttons">
+        <paper-button dialog-confirm autofocus raised>CLOSE</paper-button>
+      </div>
+    </paper-dialog>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'canopy-app',
+
+      behaviors: [
+        Polymer.IronResizableBehavior
+      ],
+
+      properties: {
+
+        _waveformHeight: Number,
+
+        _editorHeight: {
+          type: Number,
+          value: 400
+        },
+
+        _paneMinHeight: {
+          type: Number,
+          value: 256
+        }
+
+      },
+
+      _initialize: function () {
+        this.$.eWaveform.setController(this);
+        this.$.eMiniMap.setController(this);
+        this.$.eCoder.setController(this);
+
+        // Define callback for onRenderComplete for spiral-coder.
+        this.$.eCoder.onRenderComplete = this._onRenderComplete.bind(this);
+        this.$.eGistLoader.onGistLoaded = this._onGistLoaded.bind(this);
+
+        // Initialize pane heights.
+        this._updateEditorWidthByDelta(0);
+      },
+
+      postMessage: function (id, type, data) {
+        switch (id) {
+          case 'spiral-minimap':
+            this.$.eWaveform.setViewRange(data.start, data.end);
+            break;
+          case 'spiral-waveform':
+            this.$.eMiniMap.setRegion(data.start, data.end);
+            break;
+        }
+      },
+
+      _onRenderComplete: function (buffer) {
+        this.$.eWaveform.setAudioBuffer(buffer);
+        this.$.eWaveform.setViewRange(0, buffer.duration * 0.25);
+
+        this.$.eMiniMap.setAudioBuffer(buffer);
+        this.$.eMiniMap.setRegion(0, buffer.duration * 0.25);
+
+        CanopyAudio.setAudioBuffer(buffer);
+      },
+
+      _onGistLoaded: function (gist) {
+        this.$.eCoder.setCode(gist.code);
+      },
+
+      _onBtnMenu: function () {
+        this.$.eAppShell.openDrawer();
+      },
+
+      _onBtnRender: function () {
+        this.$.eCoder.renderAudioBuffer();
+      },
+
+      _onBtnOpenGistLoader: function () {
+        this.$.eLoaderModal.open();
+      },
+
+      _onBtnOpenAbout: function () {
+        this.$.eAboutModal.open();
+      },
+
+      _onAudioStop: function () {
+        CanopyAudio.stop();
+      },
+
+      _onAudioPlay: function () {
+        var region = this.$.eMiniMap.getRegion();
+        if (region)
+          CanopyAudio.play(region.start, region.end);
+      },
+
+      _onAudioToggleLoop: function () {
+        CanopyAudio.toggleLoop();
+
+        if (CanopyAudio.loop)
+          eBtnLoop.style.color = 'orange';
+        else
+          eBtnLoop.style.color = 'gray';
+      },
+
+      _resizePanes: function () {
+        // waveform H = total H - title bar H - splitter H - editor H.
+        var waveformHeight = this.clientHeight - 42 - 16 - this._editorHeight;
+
+        this.$.ePaneEditor.style.height = this._editorHeight + 'px';
+        this.$.ePaneWaveform.style.height = waveformHeight + 'px';
+        // this.$.eCoder.style.height = this._editorHeight + 'px';
+        
+        this.async(this.notifyResize, 1);
+      },
+
+      _updateEditorWidthByDelta: function (delta) {
+        this._editorHeight -= delta;
+
+        if (this._editorHeight < this._paneMinHeight) {
+          this._editorHeight = this._paneMinHeight;
+          return;
+        }
+
+        this._resizePanes();
+      },
+
+      _handleSplitterDrag: function (event) {
+        switch(event.detail.state) {
+          case 'track':
+            this.style.cursor = 'row-resize';
+            this._updateEditorWidthByDelta(event.detail.ddy);
+            break;
+          case 'end':
+            this.style.cursor = 'default';
+            break;
+        }
+      },
+
+      created: function () {
+
+      },
+
+      ready: function () {
+        this._initialize();
+      }
+    });
+  </script>
+
+</dom-module>
