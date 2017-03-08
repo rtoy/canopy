@@ -63,16 +63,16 @@
     }
   }
 
-  // TODO: Make 32 bit encoding work.
-  function _createWaveFileBlobFromAudioBuffer (audioBuffer) {
+  function _createWaveFileBlobFromAudioBuffer (audioBuffer, asFloat) {
     // Encoding setup.
     var frameLength = audioBuffer.length;
     var numberOfChannels = audioBuffer.numberOfChannels;
     var sampleRate = audioBuffer.sampleRate;
-    var bitsPerSample = 16;
+    var bitsPerSample = asFloat ? 32 : 16;
+    var bytesPerSample = bitsPerSample / 8;
     var byteRate = sampleRate * numberOfChannels * bitsPerSample / 8;
     var blockAlign = numberOfChannels * bitsPerSample / 8;
-    var wavDataByteLength = frameLength * numberOfChannels * 2;
+    var wavDataByteLength = frameLength * numberOfChannels * bytesPerSample;
     var headerByteLength = 44;
     var totalLength = headerByteLength + wavDataByteLength;
     var waveFileData = new Uint8Array(totalLength);
@@ -85,7 +85,7 @@
     _writeStringToArray('WAVE', waveFileData, 8);
     _writeStringToArray('fmt ', waveFileData, 12);
     _writeInt32ToArray(subChunk1Size, waveFileData, 16);    // SubChunk1Size (4)
-    _writeInt16ToArray(1, waveFileData, 20);                // AudioFormat (2)
+    _writeInt16ToArray(asFloat ? 3 : 1, waveFileData, 20);                // AudioFormat (2)
     _writeInt16ToArray(numberOfChannels, waveFileData, 22); // NumChannels (2)
     _writeInt32ToArray(sampleRate, waveFileData, 24);       // SampleRate (4)
     _writeInt32ToArray(byteRate, waveFileData, 28);         // ByteRate (4)
@@ -109,7 +109,7 @@
    * @return {[type]}               [description]
    */
   Exporter.createLinkFromAudioBuffer = function (anchorElement, audioBuffer) {
-    var blob = _createWaveFileBlobFromAudioBuffer(audioBuffer);
+    var blob = _createWaveFileBlobFromAudioBuffer(audioBuffer, true);
     anchorElement.href = window.URL.createObjectURL(blob);
     anchorElement.download = 'canopy-export-' + (new Date()).toJSON() + '.wav';
   };
