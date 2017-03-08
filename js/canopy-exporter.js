@@ -29,6 +29,16 @@
     targetArray[offset + 3] = (aNumber >> 24) & 255;  // byte 4
   }
 
+  // Return the bits of the float as a 32-bit integer value.  This
+  // produces the raw bits; no intepretation of the value is done.
+  function _floatBits (f) {
+    var buf = new ArrayBuffer(4);
+    (new Float32Array(buf))[0] = f;
+    var bits = (new Uint32Array(buf))[0];
+    // Return as a signed integer.
+    return bits | 0;
+  }
+
   // TODO: Does 32 bit float work??
   function _writeAudioBufferToArray (audioBuffer, targetArray, offset, bitDepth) {
     var index = 0, channel = 0;
@@ -51,7 +61,8 @@
           _writeInt16ToArray(sample, targetArray, offset);
           offset += 2;
         } else if (bitDepth === 32) {
-          sample = channelData[index];
+          // This assumes we're going to out 32-float, not 32-bit linear.
+          sample = _floatBits(channelData[index]);
           _writeInt32ToArray(sample, targetArray, offset);
           offset += 4;
         } else {
